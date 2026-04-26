@@ -1,42 +1,78 @@
+import cv2
 import os
-import pickle
+from flask import Flask, request, render_template
+from datetime import date
+from datetime import datetime
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+import joblib
+from services.log_service import *
+from services.face_service import *
+model = joblib.load('static/face_recognition_model.pkl')
 
-import tkinter as tk
-from tkinter import messagebox
-import face_recognition
+face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 
-def recognize(img_path, db_path):
 
-    img = face_recognition.load_image_file(img_path)
+#face service functions
 
-    embeddings_unknown = face_recognition.face_encodings(img)
+def extract_faces(img):
+    try:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        face_points = face_detector.detectMultiScale(gray, 1.2, 5, minSize=(20, 20))
+        return face_points
+    except:
+        return []
+    
+def identify_face(facearray):
+    return model.predict(facearray)
 
-    if len(embeddings_unknown) == 0:
-        return 'no_persons_found'
+def train_model():
+    faces = []
+    labels = []
+    userlist = os.listdir('static/faces')
+    for user in userlist:
+        for imgname in os.listdir(f'static/faces/{user}'):
+            img = cv2.imread(f'static/faces/{user}/{imgname}')
+            resized_face = cv2.resize(img, (50, 50))
+            faces.append(resized_face.ravel())
+            labels.append(user)
+    faces = np.array(faces)
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(faces, labels)
+    joblib.dump(knn, 'static/face_recognition_model.pkl')
+    
+def recognize_and_log(datetoday):
+    cap = cv2.VideoCapture(0)
 
-    embeddings_unknown = embeddings_unknown[0]
+    while True:
+        ret, frame = cap.read()
+        faces = extract_faces(frame)
 
-    db_dir = sorted(os.listdir(db_path))
+        if len(faces) > 0:
+            (x, y, w, h) = faces[0]
 
-    match = False
-    j = 0
+            face = cv2.resize(frame[y:y+h, x:x+w], (50, 50))
+            identified_person = identify_face(face.reshape(1, -1))[0]
 
-    while not match and j < len(db_dir):
+            cv2.putText(frame, str(identified_person), (x, y-10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
-        path_ = os.path.join(db_path, db_dir[j])
+        cv2.imshow("Recognition", frame)
 
-        with open(path_, 'rb') as file:
-            embeddings = pickle.load(file)
+        key = cv2.waitKey(1)
 
-        match = face_recognition.compare_faces(
-            [embeddings],
-            embeddings_unknown
-        )[0]
+        if key == 13:
+            user_id = str(identified_person)
+            username = get_username_from_db(user_id)
+            add_logs(user_id, username)
+            break
 
-        j += 1
+        if key == 27:
+            break
 
-    if match:
-        return db_dir[j - 1].replace(".pkl", "")
+    cap.release()
+    cv2.destroyAllWindows()
 
-    return 'unknown_person'
+

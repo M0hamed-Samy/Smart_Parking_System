@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+
+<body>
+
+<h2>Attendance Logs</h2>
+
+<p>Total Users: {{ totalreg }}</p>
+
+<table border="1">
+    <tr>
+        <th>Name</th>
+        <th>ID</th>
+        <th>Time</th>
+    </tr>
+
+    {% for i in range(l) %}
+    <tr>
+        <td>{{ names[i] }}</td>
+        <td>{{ rolls[i] }}</td>
+        <td>{{ times[i] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="/start">Start Face Recognition</a>
+
+</body>
+</html>

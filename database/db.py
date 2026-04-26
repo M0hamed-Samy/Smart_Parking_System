@@ -10,6 +10,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             role TEXT,
+            password TEXT,
             created_at TEXT
         )
     """)

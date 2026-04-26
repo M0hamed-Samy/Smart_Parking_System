@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+</head>
+
+<body>
+
+<h2>👑 Admin Dashboard</h2>
+
+<!-- ➕ Add User Form -->
+<form method="POST" action="/add_user">
+    <input name="name" placeholder="Name">
+    <input name="role" placeholder="Role">
+    <input name="password" placeholder="Password">
+    <button>Add User</button>
+</form>
+
+<hr>
+
+<h3>Users List</h3>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Password</th>
+    </tr>
+
+    {% for u in users %}
+    <tr>
+        <td>{{ u[0] }}</td>
+        <td>{{ u[1] }}</td>
+        <td>{{ u[2] }}</td>
+        <td>{{ u[3] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+<nav style="background-color:black; padding:10px; display:flex; justify-content:space-between;">
+
+    <h3 style="color:white;">Admin Panel</h3>
+
+    <div>
+        <a href="/login" style="color:white;">Login</a>
+        <a href="/logout" style="color:white; margin-left:10px;">Logout</a>
+    </div>
+
+</nav>
+</html>
